@@ -225,9 +225,13 @@ fn map_args(value: &Value) -> Result<Vec<Arg>> {
             "integer" | "Int" => {
                 Arg::Integer(JsonDeserializer::safe_to_int_from_field(&arg, "value")?)
             }
-            "binary" | "ByteVector" => Arg::Binary(Base64String::from_string(
-                &JsonDeserializer::safe_to_string_from_field(&arg, "value")?,
-            )?),
+            "binary" | "ByteVector" => {
+                let val = JsonDeserializer::safe_to_string_from_field(&arg, "value")?;
+                match Base64String::from_string(&val) {
+                    Ok(b) => Arg::Binary(b),
+                    Err(_) => Arg::String(val),
+                }
+            }
             "list" | "List" | "Array" => {
                 let result = map_args(&arg["value"])?;
                 Arg::List(result)
